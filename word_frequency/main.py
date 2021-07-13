@@ -8,7 +8,6 @@ import re
 
 twitterAPI = tweepy.API(twitterAuthentication())
 
-
 def getAllTweets(user):
         mediaTweets = []
         # tweet_mode is set to "extended" because some tweets are truncated ("truncated": true), causing ["media"] to not be there
@@ -50,14 +49,15 @@ def removeMentionAndURL(text):
 
 def removeStopwords(counterObj):
         wordList = list(counterObj.keys())
+        stopwordList = stopwords.words()
         for word in wordList:
-                if word in stopwords.words():
+                if word in stopwordList:
                         counterObj.pop(word)
         # no need to return, object reference stays
 
 def barChart(dataset1, dataset2, info):
         with plt.style.context('ggplot'):
-                fig, ax = plt.subplots(1, 2, figsize=(11, 6))
+                fig, ax = plt.subplots(1, 2, figsize=(10, 6))
                 fig.canvas.set_window_title(f"{info['name']}'s Word Frequency")
                 fig.suptitle(f"{info['name']}'s ({info['username']}) Word Frequency\n({info['earliest']} to {info['latest']})")
                 
@@ -71,11 +71,9 @@ def barChart(dataset1, dataset2, info):
                 ax[1].set_xlabel("Frequency")
                 ax[1].set_title("With Stopwords")
                 ax[1].legend(["count"])
-                        
-                plt.show()
-## add more white space between the two charts
-## optimize stopwords.words()
 
+                plt.subplots_adjust(left=0.12, right=0.925, wspace=0.25)
+                plt.show()
 
 def graphFrequency(user):
         username, allTweets = getAllTweets(user)
@@ -95,32 +93,4 @@ def graphFrequency(user):
         info = {"name": username, "username": user, "latest": latestTweet, "earliest": earliestTweet}
         barChart(mostCommon, mostCommonWithStopwords, info)
         
-
-def graphTweetLengths(user):
-        with plt.style.context('ggplot'):
-                fig, ax = plt.subplots(2, figsize=(10, 6))    
-                
-                # List comprehension to return a list of only the "likes" average value
-                ax[0].bar(averageLength.keys(), [value["characters"] for value in list(averageLength.values())],\
-                        width=25, edgecolor="white")
-                ax[0].set_ylabel("Monthly Length/Tweet")
-                ax[0].set_title(f"{displayName}'s Average Tweet Length")
-
-                # List comprehension to return a list of only the "retweets" average value
-                ax[1].bar(averageLength.keys(), [value["words"] for value in list(averageLength.values())],\
-                        width=25, edgecolor="white", color=(0, 0.247, 0.361))
-                ax[1].set_xlabel(f"Date ({earliestTweet} - {latestTweet})")
-                ax[1].set_ylabel("Monthly Words/Tweet")
-                ax[1].set_title(f"{displayName}'s Average Word Count")
-
-                # Title & rotate and align the tick labels
-                fig.canvas.set_window_title(f"{displayName}'s ({user}) Tweet Lengths")
-                fig.autofmt_xdate()
-                
-                # Formats x-axis points to be (Jan. 2021)
-                fmt = mdates.DateFormatter('%b. %Y') 
-                plt.gca().xaxis.set_major_formatter(fmt)
-
-                plt.show()
-
-asd = graphFrequency(input("Twitter username word frequency to chart: "))
+graphFrequency(input("Twitter username's word frequency to chart: "))
