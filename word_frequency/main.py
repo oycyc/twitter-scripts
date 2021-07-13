@@ -27,8 +27,13 @@ def getAllTweets(user):
 def countWords(tweets):
         allWords = []
         for tweet in tweets:
-                cleaned = removeMentionAndURL(tweet.full_text.lower())
-                allWords.extend(cleaned.split())
+                # Filter out retweets -- it'll mess w/ the data
+                try:
+                        tweet.retweeted_status # if this is valid, it means it's a rt
+                except AttributeError: # retweeted_status isn't an attribute, so not rt                  
+                        cleaned = removeMentionAndURL(tweet.full_text.lower())
+                        allWords.extend(cleaned.split())
+                        
         return Counter(allWords) # returns collections object
 
 def removeMentionAndURL(text):
@@ -40,7 +45,7 @@ def removeMentionAndURL(text):
         text = re.sub(r"\s*((http|https):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)(\s|\W|$)",
                       "", text)
         # Replace any punctuation with space to help .split() better later
-        text = re.sub(r"[^\w\s]", " ", text)
+        text = re.sub(r"(\s+\W)|(\W\s+)|(\W$)", " ", text)
         return text
 
 def removeStopwords(counterObj):
@@ -50,11 +55,11 @@ def removeStopwords(counterObj):
                         counterObj.pop(word)
         # no need to return, object reference stays
 
-def barChart(dataset1, dataset2, name):
+def barChart(dataset1, dataset2, info):
         with plt.style.context('ggplot'):
-                fig, ax = plt.subplots(1, 2, figsize=(10, 6))
-                fig.canvas.set_window_title(f"{name[1]}'s Word Frequency")
-                fig.suptitle(f"{name[1]}'s ({name[0]}) Word Frequency")
+                fig, ax = plt.subplots(1, 2, figsize=(11, 6))
+                fig.canvas.set_window_title(f"{info['name']}'s Word Frequency")
+                fig.suptitle(f"{info['name']}'s ({info['username']}) Word Frequency\n({info['earliest']} to {info['latest']})")
                 
                 ax[0].barh(list(dataset1.keys()), list(dataset1.values()))
                 ax[0].set_xlabel("Frequency")
@@ -68,9 +73,14 @@ def barChart(dataset1, dataset2, name):
                 ax[1].legend(["count"])
                         
                 plt.show()
+## add more white space between the two charts
+## optimize stopwords.words()
+
 
 def graphFrequency(user):
         username, allTweets = getAllTweets(user)
+        latestTweet = allTweets[0].created_at.strftime("%b. %Y")
+        earliestTweet = allTweets[-1].created_at.strftime("%b. %Y")
         countedWords = countWords(allTweets)
         
         mostCommonWithStopwords = dict(countedWords.most_common(15))
@@ -82,11 +92,10 @@ def graphFrequency(user):
         mostCommon = {k: v for k, v in sorted(mostCommon.items(), key=lambda item: item[1])}
         mostCommonWithStopwords = {k: v for k, v in sorted(mostCommonWithStopwords.items(), key=lambda item: item[1])}
 
-        barChart(mostCommon, mostCommonWithStopwords, [user, username])
-        # plt.barh(mostCommon.keys(), mostCommon.values())
-        # plt.show()
-        return mostCommon
+        info = {"name": username, "username": user, "latest": latestTweet, "earliest": earliestTweet}
+        barChart(mostCommon, mostCommonWithStopwords, info)
         
+
 def graphTweetLengths(user):
         with plt.style.context('ggplot'):
                 fig, ax = plt.subplots(2, figsize=(10, 6))    
