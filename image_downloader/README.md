@@ -1,5 +1,9 @@
 # Twitter Image Downloader
 Download all the media files from a Twitter account's timeline. It will only download 3200 of the latest tweets of an account's timeline because of Twitter's API limitations. If an user tweeted more than 3200 tweets, this program will only get the latest 3200.
+
+## Demo:
+<p align="center"><img src="demo.gif" width="100%" height="100%" alt="Downloading Google's Media Tweets"></p>
+
 ## How to Use:
 #### Use program using inputs(). It will ask for the corresponding values then download the pictures OR: 
 #### Use program by using run(username, downloadFormat, startTime, endTime, outputFolder), with startTime, endTime, and outputFolder being optional parameters.

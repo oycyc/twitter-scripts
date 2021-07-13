@@ -194,6 +194,7 @@ def run(twitterUsername, downloadFormat, startTime=None, endTime=None, outputFol
                 downloadMediaAll(filteredTweets, outputFolder)
         elif (downloadFormat == 3):
                 downloadMediaSeparate(filteredTweets, outputFolder)
+inputs()
 
 ## Use program using inputs(). It will ask for the corresponding values OR:     
 ## Use program by using run(username, downloadFormat), with optional parameters of startTime, endTime, and outputFolder
