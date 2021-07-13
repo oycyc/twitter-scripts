@@ -8,17 +8,6 @@ import re
 
 twitterAPI = tweepy.API(twitterAuthentication())
 
-def removeMentionAndURL(text):
-        # Remove the mentions (@SpaceX, @Twitter, etc)
-        # Match '@' & at least any one character except \s & ends with \s or symbols or end of string
-        text = re.sub(r"\s*@[^\s]+(\s|\W|$)", "", text)
-        # Remove any URLS (google.com, www.google.com, https://docs.github.com
-        # Match optional http/https & any subdomain & any domain names with ending (ends w/ space or symbols or end of string)
-        text = re.sub(r"\s*((http|https):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)(\s|\W|$)",
-                      "", text)
-        # Replace any punctuation with space to help .split() better later
-        text = re.sub(r"[^\w\s]", " ", text)
-        return text 
 
 def getAllTweets(user):
         mediaTweets = []
@@ -35,12 +24,24 @@ def getAllTweets(user):
         print("\n\n")
         return twitterAPI.get_user(user).name, mediaTweets
 
-def countWords(name, tweets):
+def countWords(tweets):
         allWords = []
         for tweet in tweets:
                 cleaned = removeMentionAndURL(tweet.full_text.lower())
                 allWords.extend(cleaned.split())
         return Counter(allWords) # returns collections object
+
+def removeMentionAndURL(text):
+        # Remove the mentions (@SpaceX, @Twitter, etc)
+        # Match '@' & at least any one character except \s & ends with \s or symbols or end of string
+        text = re.sub(r"\s*@[^\s]+(\s|\W|$)", "", text)
+        # Remove any URLS (google.com, www.google.com, https://docs.github.com
+        # Match optional http/https & any subdomain & any domain names with ending (ends w/ space or symbols or end of string)
+        text = re.sub(r"\s*((http|https):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)(\s|\W|$)",
+                      "", text)
+        # Replace any punctuation with space to help .split() better later
+        text = re.sub(r"[^\w\s]", " ", text)
+        return text
 
 def removeStopwords(counterObj):
         wordList = list(counterObj.keys())
@@ -48,38 +49,45 @@ def removeStopwords(counterObj):
                 if word in stopwords.words():
                         counterObj.pop(word)
         # no need to return, object reference stays
+
+def barChart(dataset1, dataset2, name):
+        with plt.style.context('ggplot'):
+                fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+                fig.canvas.set_window_title(f"{name[1]}'s Word Frequency")
+                fig.suptitle(f"{name[1]}'s ({name[0]}) Word Frequency")
+                
+                ax[0].barh(list(dataset1.keys()), list(dataset1.values()))
+                ax[0].set_xlabel("Frequency")
+                ax[0].set_ylabel("Words")
+                ax[0].set_title("No Stopwords")
+                ax[0].legend(["count"])
+
+                ax[1].barh(list(dataset2.keys()), list(dataset2.values()), color="purple")
+                ax[1].set_xlabel("Frequency")
+                ax[1].set_title("With Stopwords")
+                ax[1].legend(["count"])
+                        
+                plt.show()
+
+def graphFrequency(user):
+        username, allTweets = getAllTweets(user)
+        countedWords = countWords(allTweets)
+        
+        mostCommonWithStopwords = dict(countedWords.most_common(15))
+        # remove stopwords from original
+        removeStopwords(countedWords)
+        mostCommon = dict(countedWords.most_common(15))
+        
+        # reverse dictionaries into ascending order
+        mostCommon = {k: v for k, v in sorted(mostCommon.items(), key=lambda item: item[1])}
+        mostCommonWithStopwords = {k: v for k, v in sorted(mostCommonWithStopwords.items(), key=lambda item: item[1])}
+
+        barChart(mostCommon, mostCommonWithStopwords, [user, username])
+        # plt.barh(mostCommon.keys(), mostCommon.values())
+        # plt.show()
+        return mostCommon
         
 def graphTweetLengths(user):
-        displayName, allTweets = getAllTweets(user)
-        earliestTweet = allTweets[-1].created_at.strftime("%b. %Y")
-        latestTweet = allTweets[0].created_at.strftime("%b. %Y")
-        
-        averageLength = {}
-        
-        for tweet in allTweets:
-                # Filter out retweeted tweets -- it'll mess with the data
-                # Ex: user with 20 avg. words retweets a tweet that has 60 words
-                try:
-                        tweet.retweeted_status # if this is valid, it means it's retweeted
-                except AttributeError: # retweeted_status isn't an attribute, so it's not retweeted       
-                        tweetYearMonth = tweet.created_at.date().replace(day=1)
-                        tweetText = removeMentionAndURL(tweet.full_text)
-                        if (tweetYearMonth not in averageLength):
-                                # create dictionary for assignment
-                                averageLength[tweetYearMonth] = {"characters" : len(tweetText), \
-                                                                  "words" : len(tweetText.split()), \
-                                                                  "tweets" : 1}
-                        else:
-                                averageLength[tweetYearMonth]["characters"] += len(tweetText)
-                                averageLength[tweetYearMonth]["words"] += len(tweetText.split())
-                                averageLength[tweetYearMonth]["tweets"] += 1
-
-        # Average the metrics & delete tweet count (not needed anymore)
-        for month in averageLength:
-                averageLength[month]["characters"] /= averageLength[month]["tweets"]
-                averageLength[month]["words"] /= averageLength[month]["tweets"]
-                del averageLength[month]["tweets"]
-        
         with plt.style.context('ggplot'):
                 fig, ax = plt.subplots(2, figsize=(10, 6))    
                 
@@ -106,4 +114,4 @@ def graphTweetLengths(user):
 
                 plt.show()
 
-graphTweetLengths(input("Twitter username average lengths to graph: "))
+asd = graphFrequency(input("Twitter username word frequency to chart: "))
